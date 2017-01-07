@@ -347,7 +347,15 @@ Example:
       paperButtonTitle: {
         type: String,
         value: ''
-      }
+      },
+	  
+	  /**
+	   * `fileUploadType`allows chainging of the type of file upload
+	   */
+	   fileUploadType: {
+	     type: String,
+		 value: 'formdata'
+	   },
     },
 
     /**
@@ -528,18 +536,22 @@ Example:
       var prefix = 'files.' + this.files.indexOf(file);
       var self = this;
 
-      var formData = new FormData();
+	  var formData;
+	  if(this.fileUploadType == 'octet-stream') {
+	  }
+	  else {
+	    formData = new FormData();
 
-      // Add additional data to send with the POST variable
-      var addData = this.additional;
-      for (var key in addData) {
-          if (addData.hasOwnProperty(key)) {
-            formData.append(key, addData[key]);
-          }
+	    // Add additional data to send with the POST variable
+	    var addData = this.additional;
+	    for (var key in addData) {
+		  if (addData.hasOwnProperty(key)) {
+			formData.append(key, addData[key]);
+		  }
+	    }
+        // Add the file data last to support POSTing to Amazon Web Services S3.
+        formData.append(this.fileDataName, file, file.name);
       }
-
-      // Add the file data last to support POSTing to Amazon Web Services S3.
-      formData.append(this.fileDataName, file, file.name);
 
       var xhr = file.xhr = new XMLHttpRequest();
       xhr.withCredentials = this.withCredentials;
@@ -568,7 +580,13 @@ Example:
           self.fire('error', {xhr:xhr});
         }
       };
-      xhr.send(formData);
+	  
+	  if(this.fileUploadType == 'octet-stream') {
+        xhr.sendAsBinary(evt.target.result);
+	  }
+	  else {
+        xhr.send(formData);
+	  }
     }
   });
 
